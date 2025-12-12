@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------
+  # Service 1: Redpanda (The Message Broker / "Kafka")
+  # ---------------------------------------------------------
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: redpanda
+    command:
+      - redpanda start
+      - --smp 1  # Use only 1 CPU core (good for dev)
+      - --memory 1G  # Limit memory usage
+      - --reserve-memory 0M
+      - --overprovisioned
+      - --node-id 0
+      - --check=false
+      - --kafka-addr PLAIN://0.0.0.0:9092,OUTSIDE://0.0.0.0:9093
+      - --advertise-kafka-addr PLAIN://redpanda:9092,OUTSIDE://localhost:9093
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+    ports:
+      - "9093:9093" # Access from your laptop (localhost)
+      - "9092:9092" # Access from other containers (internal)
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------
+  # Service 2: Redpanda Console (The UI)
+  # ---------------------------------------------------------
+  console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: redpanda-console
+    entrypoint: /bin/sh
+    command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yaml; /app/console"
+    environment:
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]
+    ports:
+      - "8080:8080" # Go to http://localhost:8080 to see your data
+    depends_on:
+      - redpanda
+
+  # ---------------------------------------------------------
+  # Service 3: PostgreSQL (The Database)
+  # ---------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pricing_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  redpanda_data:
+  postgres_data:

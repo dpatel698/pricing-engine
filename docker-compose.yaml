@@ -36,14 +36,10 @@ services:
   console:
     image: docker.redpanda.com/redpandadata/console:latest
     container_name: redpanda-console
-    entrypoint: /bin/sh
-    command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yaml; /app/console"
     environment:
-      CONSOLE_CONFIG_FILE: |
-        kafka:
-          brokers: ["redpanda:9092"]
+      KAFKA_BROKERS: "redpanda:9092"
     ports:
-      - "8080:8080" # Go to http://localhost:8080 to see your data
+      - "8080:8080"
     depends_on:
       - redpanda
 

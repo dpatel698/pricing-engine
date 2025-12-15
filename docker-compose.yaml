@@ -57,7 +57,20 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
+  # ---------------------------------------------------------
+  # Service 4: Pricing Service (The FastAPI App)
+  # ---------------------------------------------------------
+  pricing_service:
+    build:
+      context: ./src/pricing_service # Dockerfile location
+    container_name: pricing_service
+    ports:
+      - "8000:8000" # Expose FastAPI to your host machine
+    depends_on:
+      - redpanda    # Must start after redpanda is running
+    environment:
+      # This is the magic! The app connects to the Redpanda service name
+      KAFKA_BROKERS: "redpanda:9092"
 volumes:
   redpanda_data:
   postgres_data:

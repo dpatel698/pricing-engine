@@ -25,7 +25,7 @@ services:
     volumes:
       - redpanda_data:/var/lib/redpanda/data
     healthcheck:
-      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy'"]
+      test: [ "CMD-SHELL", "rpk cluster health | grep -q 'Healthy'" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -62,7 +62,8 @@ services:
   # ---------------------------------------------------------
   pricing_service:
     build:
-      context: ./src/pricing_service # Dockerfile location
+      context: . # Dockerfile location
+      dockerfile: ./src/pricing_service/Dockerfile # <-- ADDED: Explicit path to Dockerfile
     container_name: pricing_service
     ports:
       - "8000:8000" # Expose FastAPI to your host machine
